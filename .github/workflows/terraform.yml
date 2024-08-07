@@ -83,6 +83,10 @@ jobs:
           ARM_CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r '.["clientSecret"]')
           ARM_TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["tenantId"]')
           ARM_SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["subscriptionId"]')
+          RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+          STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
+          CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+          KEY: ${{ secrets.KEY }}
           echo ARM_CLIENT_ID=$ARM_CLIENT_ID >> $GITHUB_ENV
           echo ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET >> $GITHUB_ENV
           echo ARM_TENANT_ID=$ARM_TENANT_ID >> $GITHUB_ENV
