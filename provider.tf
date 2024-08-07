@@ -11,6 +11,13 @@ terraform {
       version = ">= 3.0"
     }
   }
+  backend "azurerm" {
+    resource_group_name   = "rg-tf-datastore"
+    storage_account_name  = "tfdatastore324"
+    container_name        = "tfstate"
+    key                   = "terraform.tfstate"
+  }
+
 }
 
 # Provider Block

@@ -1,65 +1,98 @@
----
-title: Terraform File Provisioner
-description: Learn Terraform File Provisioner
----
+# GitHub CI/CD
 
-## Step-00: Provisioner Concepts
-- Generic Provisioners
-1. [file](https://www.terraform.io/docs/language/resources/provisioners/file.html)
-2. local-exec
-3. remote-exec
-- Provisioner Timings
-  - Creation-Time Provisioners (by default)
-  - Destroy-Time Provisioners  
-- Provisioner Failure Behavior
-  - continue
-  - fail
-- [Provisioner Connections](https://www.terraform.io/docs/language/resources/provisioners/connection.html)
-- Provisioner Without a Resource  (Null Resource)
+## Azure Account List
+az account list
+Observation:
+1. Make a note of the value whose key is "id" which is nothing but your "subscription_id"
 
-## Pre-requisites - SSH Keys
-- Create SSH Keys for Azure VM Instance if not created
-```t
-# Create Folder
-cd terraform-manifests/
-mkdir ssh-keys
+## Set Subscription ID
+az account set --subscription="SUBSCRIPTION_ID"
 
-# Create SSH Key
-cd ssh-ekys
-ssh-keygen -m PEM -t rsa -b 4096 -C "azureuser@myserver" -f terraform-azure.pem 
+## Create Service Principal & Client Secret
+az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/SUBSCRIPTION_ID"
 
-# List Files
-ls -lrt ssh-keys/
+## Sample Output
 
-# Permissions for Pem file
-chmod 400 terraform-azure.pem
-```  
-- Connection Block for provisioners uses this to connect to newly created Azure VM instance to copy files using `file provisioner`, execute scripts using `remote-exec provisioner`
+```json
+{
+  "clientId": "e578d5de-995f-xxxx-xxxx-c412cdf35c47",
+  "clientSecret": "nSi8Qtjerotjeortjepoep3I6mRcc9",
+  "subscriptionId": "43b3f2ee-xxxx-xxxx-b907-0fd7ce508380",
+  "tenantId": "93a4b9f8-9f40-xxxx-xxxx-83b6a36e591e",
+  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+  "resourceManagerEndpointUrl": "https://management.azure.com/",
+  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+  "galleryEndpointUrl": "https://gallery.azure.com/",
+  "managementEndpointUrl": "https://management.core.windows.net/"
+}
+```
+
+You need to copy the output values to a safe place. You will need them later.
+
+## Authenticate GitHub Actions with Azure
+
+### Create GitHub Secrets
+
+1. Go to your GitHub repository
+2. Click on "Settings" tab
+3. Click on "Secrets" on the left side
+4. Click on "New repository secret"
+5. Add a secret with the name "AZURE_CREDENTIALS" and value as below
+
+```json
+{
+  "clientId": "e578d5de-995f-xxxx-xxxx-c412cdf35c47",
+  "clientSecret": "nSi8Qtjerotjeortjepoep3I6mRcc9",
+  "subscriptionId": "43b3f2ee-xxxx-xxxx-b907-0fd7ce508380",
+  "tenantId": "93a4b9f8-9f40-xxxx-xxxx-83b6a36e591e",
+  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+  "resourceManagerEndpointUrl": "https://management.azure.com/",
+  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+  "galleryEndpointUrl": "https://gallery.azure.com/",
+  "managementEndpointUrl": "https://management.core.windows.net/"
+}
+```
 
 
-## Step-1: Create Resources using Terraform commands
+## Setup Azure Backend
 
-```t
-# Terraform Initialize
-terraform init
+### Create a Storage Account
 
-# Terraform Validate
-terraform validate
+```bash
+#!/bin/bash
 
-# Terraform Format
-terraform fmt
+# Usage: ./create-sa-backend-datastore.sh <ResourceGroup> <Location> <StorageAccountName> <ContainerName>
+# Example: ./create-sa-backend-datastore.sh rg-tf-datastore southeastasia tfdatastore324 tfstate
 
-# Terraform Plan
-terraform plan
+ResourceGroup=$1
+Location=$2
+StorageAccountName=$3
+ContainerName=$4
 
-# Terraform Apply
-terraform apply -auto-approve
+# Login to Azure
 
-# Verify - Login to Azure Virtual Machine Instance
-ssh -i ssh-keys/terraform-azure.pem azureuser@IP_ADDRESSS_OF_YOUR_VM
-ssh -i ssh-keys/terraform-azure.pem azureuser@20.185.30.127
-Verify /tmp for all files copied
-cd /tmp
-ls -lrta /tmp
+az login
 
+# Create a resource group
+if [ $(az group exists --name $ResourceGroup) == false ]; then
+    echo "Creating resource group $ResourceGroup in $Location"
+    az group create --name $ResourceGroup --location $Location
+else
+    echo "Resource group $ResourceGroup already exists"
+fi
+
+# Create a storage account
+
+if [ $(az storage account check-name --name $StorageAccountName --query nameAvailable) == true ]; then
+    echo "Creating storage account $StorageAccountName in $Location"
+    az storage account create --name $StorageAccountName --resource-group $ResourceGroup --location $Location --sku Standard_LRS
+else
+    echo "Storage account $StorageAccountName already exists"
+fi
+
+# Create a storage container
+
+az storage container create --name $ContainerName --account-name $StorageAccountName
 ```
