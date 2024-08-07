@@ -74,6 +74,20 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: JSON Parse
+      id: parse
+      env:
+        AZJSON: ${{ secrets.AZURE_CREDENTIALS }}
+      run: |
+          ARM_CLIENT_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["clientId"]')
+          ARM_CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r '.["clientSecret"]')
+          ARM_TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["tenantId"]')
+          ARM_SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["subscriptionId"]')
+          echo ARM_CLIENT_ID=$ARM_CLIENT_ID >> $GITHUB_ENV
+          echo ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET >> $GITHUB_ENV
+          echo ARM_TENANT_ID=$ARM_TENANT_ID >> $GITHUB_ENV
+          echo ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID >> $GITHUB_ENV
+
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
