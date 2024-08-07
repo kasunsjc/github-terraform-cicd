@@ -7,6 +7,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   admin_username      = "azureuser"
   network_interface_ids = [ azurerm_network_interface.vmnic.id ]
   admin_password = "Password1234!"
+  disable_password_authentication = false
 
   os_disk {
     name = "osdisk${random_string.random.id}"
