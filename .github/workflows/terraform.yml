@@ -73,11 +73,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Azure Authentication
-      id: login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    # - name: Azure Authentication
+    #   id: login
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # - name: JSON Parse
     #   id: parse
