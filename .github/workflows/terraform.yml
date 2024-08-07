@@ -83,9 +83,9 @@ jobs:
           ARM_CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r '.["clientSecret"]')
           ARM_TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["tenantId"]')
           ARM_SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r '.["subscriptionId"]')
-          RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
-          STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
-          CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+          RESOURCE_GROUP=${{ secrets.RESOURCE_GROUP }}
+          STORAGE_ACCOUNT=${{ secrets.STORAGE_ACCOUNT }}
+          CONTAINER_NAME=${{ secrets.CONTAINER_NAME }}
           KEY: ${{ secrets.KEY }}
           echo ARM_CLIENT_ID=$ARM_CLIENT_ID >> $GITHUB_ENV
           echo ARM_CLIENT_SECRET=$ARM_CLIENT_SECRET >> $GITHUB_ENV
@@ -102,7 +102,7 @@ jobs:
     - name: Terraform Init
       id: init
       run: |
-        terraform init
+        terraform init -reconfigure -input=false -backend-config="storage_account_name=${{ env.STORAGE_ACCOUNT }}" -backend-config="container_name=${{ env.CONTAINER_NAME }}" -backend-config="key=${{ env.KEY }}" -backend-config="resource_group_name=${{ env.RESOURCE_GROUP }}"
 
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
